@@ -29,8 +29,9 @@ ruby -c "$formula"
 grep -q 'version "2026.1.0"' "$formula"
 grep -q 'UNICITY_AOS_RUNTIME_BIN' "$formula"
 grep -q 'unicity-aos-aarch64-apple-darwin.tar.gz' "$formula"
+grep -Fq 'assert_predicate libexec/"runtime/bin/astrid", :executable?' "$formula"
+grep -Fq 'assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?' "$formula"
 if grep -q '@[A-Z_]*@' "$formula"; then
   echo "formula still contains a template placeholder" >&2
   exit 1
 fi
-

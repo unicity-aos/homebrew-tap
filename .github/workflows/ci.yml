@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  formula:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - run: shellcheck scripts/*.sh
+      - run: scripts/test-render-formula.sh
+      - name: Audit published formula
+        if: hashFiles('Formula/aos.rb') != ''
+        run: brew audit --strict Formula/aos.rb
+

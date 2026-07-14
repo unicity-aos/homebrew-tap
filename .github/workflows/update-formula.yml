@@ -51,7 +51,7 @@ jobs:
           LINUX_ARM=$(sha unicity-aos-aarch64-unknown-linux-gnu.tar.gz)
           LINUX_INTEL=$(sha unicity-aos-x86_64-unknown-linux-gnu.tar.gz)
           scripts/render-formula.sh "$VERSION" "$MAC_ARM" "$MAC_INTEL" "$LINUX_ARM" "$LINUX_INTEL"
-          scripts/test-render-formula.sh
+          scripts/validate-formula.sh Formula/aos.rb "$VERSION"
       - name: Commit formula
         run: |
           if git diff --quiet -- Formula/aos.rb; then

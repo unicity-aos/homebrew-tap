@@ -54,12 +54,12 @@ jobs:
           scripts/validate-formula.sh Formula/aos.rb "$VERSION"
       - name: Commit formula
         run: |
-          if git diff --quiet -- Formula/aos.rb; then
+          git add Formula/aos.rb
+          if git diff --cached --quiet -- Formula/aos.rb; then
             echo "Formula is already current."
             exit 0
           fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add Formula/aos.rb
           git commit -m "aos ${VERSION}"
           git push

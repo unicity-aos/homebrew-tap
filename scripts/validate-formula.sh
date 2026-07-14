@@ -15,7 +15,8 @@ if [[ ! -f "$formula" ]]; then
 fi
 
 ruby -c "$formula"
-grep -Fq "version \"$version\"" "$formula"
+grep -Fq "/$version/unicity-aos-aarch64-apple-darwin.tar.gz" "$formula"
+grep -Fq "Unicity AOS $version" "$formula"
 grep -Fq 'UNICITY_AOS_RUNTIME_BIN' "$formula"
 grep -Fq 'unicity-aos-aarch64-apple-darwin.tar.gz' "$formula"
 grep -Fq 'assert_predicate libexec/"runtime/bin/astrid", :executable?' "$formula"

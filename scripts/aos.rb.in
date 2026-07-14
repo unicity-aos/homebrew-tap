@@ -1,7 +1,6 @@
 class Aos < Formula
   desc "Modular Agent Operating System built on Astrid Runtime"
   homepage "https://aos.unicity.ai"
-  version "@VERSION@"
   license "Apache-2.0"
 
   on_macos do
@@ -27,7 +26,7 @@ class Aos < Formula
   def install
     libexec.install "bin", "runtime", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
     (bin/"aos").write_env_script libexec/"bin/aos",
-      "UNICITY_AOS_RUNTIME_BIN" => libexec/"runtime/bin/astrid",
+      "UNICITY_AOS_RUNTIME_BIN"    => libexec/"runtime/bin/astrid",
       "UNICITY_AOS_INSTALL_METHOD" => "homebrew"
   end
 

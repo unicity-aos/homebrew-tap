@@ -33,6 +33,7 @@ class Aos < Formula
 
   test do
     assert_match "Unicity AOS @VERSION@", shell_output("#{bin}/aos --version")
+    assert_predicate libexec/"runtime/bin/astrid", :executable?
+    assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?
   end
 end
-

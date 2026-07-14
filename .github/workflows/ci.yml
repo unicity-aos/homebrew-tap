@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact main commit this run must validate
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -14,10 +20,22 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Bind dispatched validation to its commit
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_SHA" == "$EXPECTED_SHA" ]]
       - name: Install ShellCheck
         run: brew install shellcheck
       - run: shellcheck scripts/*.sh
       - run: scripts/test-render-formula.sh
+      - run: scripts/test-create-signed-commit-payload.sh
       - name: Audit published formula
         if: hashFiles('Formula/aos.rb') != ''
-        run: brew audit --strict Formula/aos.rb
+        run: |
+          brew tap unicity-aos/tap
+          cp Formula/aos.rb "$(brew --repository unicity-aos/tap)/Formula/aos.rb"
+          brew trust --formula unicity-aos/tap/aos
+          brew audit --strict unicity-aos/tap/aos

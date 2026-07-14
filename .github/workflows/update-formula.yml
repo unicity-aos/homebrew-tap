@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: update-aos-formula
@@ -19,7 +20,7 @@ concurrency:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       VERSION: ${{ github.event.client_payload.version || inputs.version }}
     steps:
@@ -52,14 +53,68 @@ jobs:
           LINUX_INTEL=$(sha unicity-aos-x86_64-unknown-linux-gnu.tar.gz)
           scripts/render-formula.sh "$VERSION" "$MAC_ARM" "$MAC_INTEL" "$LINUX_ARM" "$LINUX_INTEL"
           scripts/validate-formula.sh Formula/aos.rb "$VERSION"
-      - name: Commit formula
+      - name: Audit formula
         run: |
-          git add Formula/aos.rb
-          if git diff --cached --quiet -- Formula/aos.rb; then
+          brew tap unicity-aos/tap
+          cp Formula/aos.rb "$(brew --repository unicity-aos/tap)/Formula/aos.rb"
+          brew trust --formula unicity-aos/tap/aos
+          brew audit --strict unicity-aos/tap/aos
+      - name: Detect formula change
+        id: formula
+        run: |
+          if [[ -z "$(git status --porcelain -- Formula/aos.rb)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Formula is already current."
-            exit 0
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git commit -m "aos ${VERSION}"
-          git push
+      - name: Publish signed formula commit
+        if: steps.formula.outputs.changed == 'true'
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          scripts/create-signed-commit-payload.sh \
+            "$GITHUB_REPOSITORY" \
+            "$GITHUB_SHA" \
+            "$VERSION" \
+            Formula/aos.rb > "$RUNNER_TEMP/commit-formula.json"
+          gh api graphql --input "$RUNNER_TEMP/commit-formula.json" \
+            > "$RUNNER_TEMP/commit-formula-response.json"
+          oid=$(jq -er '
+            .data.createCommitOnBranch.commit
+            | select(.signature.isValid == true and .signature.wasSignedByGitHub == true)
+            | .oid
+          ' "$RUNNER_TEMP/commit-formula-response.json")
+          url=$(jq -er '.data.createCommitOnBranch.commit.url' "$RUNNER_TEMP/commit-formula-response.json")
+          echo "sha=$oid" >> "$GITHUB_OUTPUT"
+          echo "Published verified commit $oid: $url"
+      - name: Validate published main
+        if: steps.formula.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ steps.publish.outputs.sha }}
+        run: |
+          gh workflow run ci.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f expected_sha="$EXPECTED_SHA"
+
+          run_id=
+          for _ in {1..30}; do
+            run_id=$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow ci.yml \
+              --event workflow_dispatch \
+              --commit "$EXPECTED_SHA" \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId // empty')
+            [[ -n "$run_id" ]] && break
+            sleep 2
+          done
+          [[ -n "$run_id" ]]
+          gh run watch "$run_id" \
+            --repo "$GITHUB_REPOSITORY" \
+            --interval 10 \
+            --exit-status

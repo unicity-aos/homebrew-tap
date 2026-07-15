@@ -8,6 +8,11 @@ fi
 
 formula=$1
 version=$2
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# shellcheck source=scripts/version-policy.sh
+source "$repo_root/scripts/version-policy.sh"
+
+validate_publishable_aos_version "$version"
 
 if [[ ! -f "$formula" ]]; then
   echo "formula not found: $formula" >&2

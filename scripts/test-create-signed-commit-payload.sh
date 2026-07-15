@@ -12,7 +12,7 @@ printf 'class Aos < Formula\nend\n' > "$formula"
 "$repo_root/scripts/create-signed-commit-payload.sh" \
   unicity-aos/homebrew-tap \
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-  2026.1.0 \
+  2026.1.1 \
   "$formula" > "$payload"
 
 expected_contents=$(base64 < "$formula" | tr -d '\n')
@@ -24,7 +24,7 @@ jq -e \
       refName: "refs/heads/main"
     },
     expectedHeadOid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    message: { headline: "aos 2026.1.0" },
+    message: { headline: "aos 2026.1.1" },
     fileChanges: {
       additions: [{ path: "Formula/aos.rb", contents: $contents }]
     }
@@ -34,7 +34,19 @@ jq -e \
   "$payload" > /dev/null
 
 if "$repo_root/scripts/create-signed-commit-payload.sh" \
-  unicity-aos/homebrew-tap not-a-commit 2026.1.0 "$formula" > /dev/null 2>&1; then
+  unicity-aos/homebrew-tap not-a-commit 2026.1.1 "$formula" > /dev/null 2>&1; then
   echo "payload builder accepted an invalid expected head" >&2
   exit 1
 fi
+
+for invalid in 2026.1.0 2026.01.1 2026.1.01 2026.1; do
+  if "$repo_root/scripts/create-signed-commit-payload.sh" \
+    unicity-aos/homebrew-tap \
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+    "$invalid" \
+    "$formula" \
+    > /dev/null 2>&1; then
+    echo "payload builder accepted invalid or unsupported version: $invalid" >&2
+    exit 1
+  fi
+done

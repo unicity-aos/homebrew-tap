@@ -12,10 +12,10 @@ mac_intel=$3
 linux_arm=$4
 linux_intel=$5
 
-if [[ ! "$version" =~ ^20[0-9]{2}\.[0-9]+\.[0-9]+$ ]]; then
-  echo "invalid AOS calendar-semver version: $version" >&2
-  exit 1
-fi
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# shellcheck source=scripts/version-policy.sh
+source "$repo_root/scripts/version-policy.sh"
+validate_publishable_aos_version "$version"
 for digest in "$mac_arm" "$mac_intel" "$linux_arm" "$linux_intel"; do
   if [[ ! "$digest" =~ ^[0-9a-f]{64}$ ]]; then
     echo "invalid SHA-256 digest" >&2
@@ -23,7 +23,6 @@ for digest in "$mac_arm" "$mac_intel" "$linux_arm" "$linux_intel"; do
   fi
 done
 
-repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 mkdir -p "$repo_root/Formula"
 
 sed \
@@ -33,4 +32,3 @@ sed \
   -e "s/@LINUX_ARM_SHA@/$linux_arm/g" \
   -e "s/@LINUX_INTEL_SHA@/$linux_intel/g" \
   "$repo_root/scripts/aos.rb.in" > "$repo_root/Formula/aos.rb"
-

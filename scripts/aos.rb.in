@@ -24,9 +24,10 @@ class Aos < Formula
   end
 
   def install
-    libexec.install "bin", "runtime", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
+    libexec.install "bin", "runtime", "capsules", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
     (bin/"aos").write_env_script libexec/"bin/aos",
       "UNICITY_AOS_RUNTIME_BIN"    => libexec/"runtime/bin/astrid",
+      "UNICITY_AOS_CAPSULE_DIR"    => libexec/"capsules",
       "UNICITY_AOS_INSTALL_METHOD" => "homebrew"
   end
 
@@ -34,5 +35,7 @@ class Aos < Formula
     assert_match "Unicity AOS @VERSION@", shell_output("#{bin}/aos --version")
     assert_predicate libexec/"runtime/bin/astrid", :executable?
     assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?
+    assert_predicate libexec/"capsules/astrid-capsule-cli.capsule", :file?
+    assert_predicate libexec/"capsules/astrid-capsule-http.capsule", :file?
   end
 end

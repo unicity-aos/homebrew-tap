@@ -8,23 +8,31 @@ trap 'rm -rf "$work"' EXIT
 export GH_CALLS="$work/gh-calls"
 gh() {
   printf '%s\n' "$*" > "$GH_CALLS"
-  printf '%s\n' "${FAKE_RELEASE_VERSION:-}"
+  printf '%s\n' "${FAKE_GH_RESPONSE:-null}"
 }
 export -f gh
 
-actual=$(FAKE_RELEASE_VERSION=2026.1.0 \
+actual=$(FAKE_GH_RESPONSE='{"draft":false,"prerelease":false,"tag_name":"2026.1.0"}' \
   bash "$repo_root/scripts/resolve-release-version.sh" 2026.1.0)
 [[ "$actual" == 2026.1.0 ]]
-grep -Fq 'api repos/unicity-aos/aos-ce/releases/tags/2026.1.0 --jq' "$GH_CALLS"
-grep -Fq 'requested AOS release is a prerelease' "$GH_CALLS"
+grep -Fxq 'api repos/unicity-aos/aos-ce/releases/tags/2026.1.0' "$GH_CALLS"
 
-actual=$(FAKE_RELEASE_VERSION=2026.2.3 \
+actual=$(FAKE_GH_RESPONSE='[
+  {"draft":false,"prerelease":false,"tag_name":"2026.9.99"},
+  {"draft":true,"prerelease":false,"tag_name":"2027.1.0"},
+  {"draft":false,"prerelease":true,"tag_name":"2026.11.0"},
+  {"draft":false,"prerelease":false,"tag_name":"not-a-version"},
+  {"draft":false,"prerelease":false,"tag_name":"2026.10.0"},
+  {"draft":false,"prerelease":false,"tag_name":"2025.99.99"}
+]' \
   bash "$repo_root/scripts/resolve-release-version.sh")
-[[ "$actual" == 2026.2.3 ]]
-grep -Fq 'api repos/unicity-aos/aos-ce/releases?per_page=100 --jq' "$GH_CALLS"
-grep -Fq 'prerelease == false' "$GH_CALLS"
+[[ "$actual" == 2026.10.0 ]]
+grep -Fxq 'api repos/unicity-aos/aos-ce/releases?per_page=100' "$GH_CALLS"
 
-actual=$(FAKE_RELEASE_VERSION='' \
+actual=$(FAKE_GH_RESPONSE='[
+  {"draft":true,"prerelease":false,"tag_name":"2026.2.0"},
+  {"draft":false,"prerelease":true,"tag_name":"2026.1.0"}
+]' \
   bash "$repo_root/scripts/resolve-release-version.sh")
 [[ -z "$actual" ]]
 
@@ -36,15 +44,23 @@ if bash "$repo_root/scripts/resolve-release-version.sh" v2026.1.0 \
 fi
 [[ ! -e "$GH_CALLS" ]]
 
-if FAKE_RELEASE_VERSION=2026.1.1 \
+if FAKE_GH_RESPONSE='{"draft":false,"prerelease":false,"tag_name":"2026.1.1"}' \
   bash "$repo_root/scripts/resolve-release-version.sh" 2026.1.0 \
   > /dev/null 2>&1; then
   echo "accepted mismatched explicit AOS release tag" >&2
   exit 1
 fi
 
-if FAKE_RELEASE_VERSION=nightly \
-  bash "$repo_root/scripts/resolve-release-version.sh" > /dev/null 2>&1; then
-  echo "accepted invalid published AOS version" >&2
+if FAKE_GH_RESPONSE='{"draft":true,"prerelease":false,"tag_name":"2026.1.0"}' \
+  bash "$repo_root/scripts/resolve-release-version.sh" 2026.1.0 \
+  > /dev/null 2>&1; then
+  echo "accepted a draft AOS release" >&2
+  exit 1
+fi
+
+if FAKE_GH_RESPONSE='{"draft":false,"prerelease":true,"tag_name":"2026.1.0"}' \
+  bash "$repo_root/scripts/resolve-release-version.sh" 2026.1.0 \
+  > /dev/null 2>&1; then
+  echo "accepted a prerelease AOS release" >&2
   exit 1
 fi

@@ -32,6 +32,7 @@ jobs:
       - run: shellcheck scripts/*.sh
       - run: scripts/test-render-formula.sh
       - run: scripts/test-create-signed-commit-payload.sh
+      - run: scripts/test-resolve-release-version.sh
       - name: Audit published formula
         if: hashFiles('Formula/aos.rb') != ''
         run: |

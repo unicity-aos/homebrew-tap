@@ -39,6 +39,10 @@ if "$repo_root/scripts/render-formula.sh" \
   echo "accepted a non-canonical calendar-semver version" >&2
   exit 1
 fi
+if "$repo_root/scripts/validate-formula.sh" "$formula" 2026.01.0 > /dev/null 2>&1; then
+  echo "formula validator accepted a non-canonical calendar-semver version" >&2
+  exit 1
+fi
 "$repo_root/scripts/render-formula.sh" \
   2026.13.0 \
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \

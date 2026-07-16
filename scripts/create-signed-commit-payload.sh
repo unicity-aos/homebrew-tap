@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# shellcheck source=scripts/aos-version.sh
+source "$repo_root/scripts/aos-version.sh"
+
 if [[ $# -ne 6 ]]; then
   echo "usage: $0 <owner/repository> <expected-head-oid> <version> <formula> <channel> <channel-bundle>" >&2
   exit 2
@@ -21,11 +25,7 @@ if [[ ! "$head" =~ ^[0-9a-f]{40}$ ]]; then
   echo "invalid expected head oid" >&2
   exit 1
 fi
-if [[ ! "$version" =~ ^(20[0-9]{2})\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || \
-   ((10#${BASH_REMATCH[1]} < 2026)); then
-  echo "invalid AOS calendar-semver version: $version" >&2
-  exit 1
-fi
+validate_aos_version "$version"
 if [[ ! -f "$formula" ]]; then
   echo "formula not found: $formula" >&2
   exit 1

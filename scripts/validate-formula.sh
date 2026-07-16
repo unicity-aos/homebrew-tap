@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# shellcheck source=scripts/aos-version.sh
+source "$repo_root/scripts/aos-version.sh"
+
 if [[ $# -ne 2 ]]; then
   echo "usage: $0 <formula> <version>" >&2
   exit 2
@@ -8,6 +12,8 @@ fi
 
 formula=$1
 version=$2
+
+validate_aos_version "$version"
 
 if [[ ! -f "$formula" ]]; then
   echo "formula not found: $formula" >&2

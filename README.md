@@ -4,6 +4,8 @@ Official Homebrew formulae for Unicity AOS Community Edition. Before the first
 signed stable-channel promotion, the tap intentionally contains no installable
 formula.
 
+After that promotion, install with:
+
 ```sh
 brew install unicity-aos/tap/aos
 ```

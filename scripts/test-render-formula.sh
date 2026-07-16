@@ -27,6 +27,8 @@ trap restore EXIT
 
 "$repo_root/scripts/validate-formula.sh" "$formula" 2026.1.0
 grep -Fq '/2026.1.0/unicity-aos-2026.1.0-aarch64-apple-darwin.tar.gz' "$formula"
+grep -Fq '"UNICITY_AOS_CAPSULE_DIR"    => libexec/"capsules"' "$formula"
+grep -Fq 'system bin/"aos", "init", "--offline", "--yes"' "$formula"
 if "$repo_root/scripts/render-formula.sh" \
   2026.01.0 \
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \

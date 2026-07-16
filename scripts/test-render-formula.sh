@@ -19,23 +19,28 @@ restore() {
 trap restore EXIT
 
 "$repo_root/scripts/render-formula.sh" \
-  2026.1.1 \
+  2026.1.0 \
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
   bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
   cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc \
   dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 
-"$repo_root/scripts/validate-formula.sh" "$formula" 2026.1.1
-
-for invalid in 2026.1.0 2026.01.1 2026.1.01 2026.1; do
-  if "$repo_root/scripts/render-formula.sh" \
-    "$invalid" \
-    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
-    cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc \
-    dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd \
-    > /dev/null 2>&1; then
-    echo "formula renderer accepted invalid or unsupported version: $invalid" >&2
-    exit 1
-  fi
-done
+"$repo_root/scripts/validate-formula.sh" "$formula" 2026.1.0
+grep -Fq '/2026.1.0/unicity-aos-2026.1.0-aarch64-apple-darwin.tar.gz' "$formula"
+if "$repo_root/scripts/render-formula.sh" \
+  2026.01.0 \
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc \
+  dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd \
+  > /dev/null 2>&1; then
+  echo "accepted a non-canonical calendar-semver version" >&2
+  exit 1
+fi
+"$repo_root/scripts/render-formula.sh" \
+  2026.13.0 \
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc \
+  dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+"$repo_root/scripts/validate-formula.sh" "$formula" 2026.13.0

@@ -5,29 +5,28 @@ class Aos < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-aarch64-apple-darwin.tar.gz"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-@VERSION@-aarch64-apple-darwin.tar.gz"
       sha256 "@MAC_ARM_SHA@"
     else
-      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-@VERSION@-x86_64-apple-darwin.tar.gz"
       sha256 "@MAC_INTEL_SHA@"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-aarch64-unknown-linux-gnu.tar.gz"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-@VERSION@-aarch64-unknown-linux-gnu.tar.gz"
       sha256 "@LINUX_ARM_SHA@"
     else
-      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-x86_64-unknown-linux-gnu.tar.gz"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/@VERSION@/unicity-aos-@VERSION@-x86_64-unknown-linux-gnu.tar.gz"
       sha256 "@LINUX_INTEL_SHA@"
     end
   end
 
   def install
-    libexec.install "bin", "runtime", "capsules", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
+    libexec.install "bin", "runtime", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
     (bin/"aos").write_env_script libexec/"bin/aos",
       "UNICITY_AOS_RUNTIME_BIN"    => libexec/"runtime/bin/astrid",
-      "UNICITY_AOS_CAPSULE_DIR"    => libexec/"capsules",
       "UNICITY_AOS_INSTALL_METHOD" => "homebrew"
   end
 
@@ -35,7 +34,5 @@ class Aos < Formula
     assert_match "Unicity AOS @VERSION@", shell_output("#{bin}/aos --version")
     assert_predicate libexec/"runtime/bin/astrid", :executable?
     assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?
-    assert_predicate libexec/"capsules/astrid-capsule-cli.capsule", :file?
-    assert_predicate libexec/"capsules/astrid-capsule-http.capsule", :file?
   end
 end

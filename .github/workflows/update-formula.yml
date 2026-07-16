@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
-    inputs:
-      version:
-        description: AOS calendar-semver release (minimum 2026.1.1); empty selects the latest published stable release
-        required: false
-        type: string
 
 permissions:
   contents: write
@@ -20,6 +15,7 @@ concurrency:
 
 jobs:
   update:
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -27,68 +23,141 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - name: Resolve published release
-        id: release
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Discover signed stable channel
+        id: channel
         env:
           GH_TOKEN: ${{ github.token }}
-          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
-          VERSION=$(bash scripts/resolve-release-version.sh "$REQUESTED_VERSION")
-          if [[ -z "$VERSION" ]]; then
-            echo "No published stable AOS release exists; formula remains unchanged."
+          CHANNEL_TAG=$(scripts/discover-stable-channel.sh)
+          if [[ -z "$CHANNEL_TAG" ]]; then
+            echo "No signed AOS stable channel exists; the tap remains dormant."
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "found=true" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Download release checksums
-        if: steps.release.outputs.found == 'true'
-        run: |
-          BASE="https://github.com/unicity-aos/aos-ce/releases/download/${VERSION}"
-          curl --proto '=https' --tlsv1.2 -fsSL "$BASE/SHA256SUMS.txt" -o SHA256SUMS.txt
-          curl --proto '=https' --tlsv1.2 -fsSL "$BASE/SHA256SUMS.txt.sigstore.json" -o SHA256SUMS.txt.sigstore.json
+          echo "tag=$CHANNEL_TAG" >> "$GITHUB_OUTPUT"
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        if: steps.release.outputs.found == 'true'
-      - name: Verify release checksum identity
-        if: steps.release.outputs.found == 'true'
+        if: steps.channel.outputs.found == 'true'
+      - name: Download and authenticate stable channel
+        if: steps.channel.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL_TAG: ${{ steps.channel.outputs.tag }}
         run: |
+          gh release download "$CHANNEL_TAG" \
+            --repo unicity-aos/aos-ce \
+            --pattern channel.toml \
+            --pattern channel.toml.sigstore.json
+          IDENTITY="https://github.com/unicity-aos/aos-ce/.github/workflows/promote-channel.yml@refs/heads/main"
           cosign verify-blob \
-            --bundle SHA256SUMS.txt.sigstore.json \
+            --bundle channel.toml.sigstore.json \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-            --certificate-identity "https://github.com/unicity-aos/aos-ce/.github/workflows/release.yml@refs/tags/${VERSION}" \
-            SHA256SUMS.txt
-      - name: Render formula
-        if: steps.release.outputs.found == 'true'
+            --certificate-identity "$IDENTITY" \
+            --use-signed-timestamps \
+            channel.toml
+      - name: Enforce accepted channel generation
+        if: steps.channel.outputs.found == 'true'
+        id: accepted
         run: |
-          sha() {
-            awk -v asset="$1" '$2 == asset { print $1; exit }' SHA256SUMS.txt
+          accepted=()
+          if [[ -e Formula/channel-stable.toml || -e Formula/channel-stable.toml.sigstore.json ]]; then
+            [[ -f Formula/channel-stable.toml ]]
+            [[ -f Formula/channel-stable.toml.sigstore.json ]]
+            IDENTITY="https://github.com/unicity-aos/aos-ce/.github/workflows/promote-channel.yml@refs/heads/main"
+            cosign verify-blob \
+              --bundle Formula/channel-stable.toml.sigstore.json \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity "$IDENTITY" \
+              --use-signed-timestamps \
+              Formula/channel-stable.toml
+            accepted=(
+              --accepted-channel Formula/channel-stable.toml
+              --accepted-bundle Formula/channel-stable.toml.sigstore.json
+            )
+          fi
+          python3 scripts/channel_release.py inspect-channel \
+            --channel channel.toml \
+            --channel-bundle channel.toml.sigstore.json \
+            "${accepted[@]}" > channel.json
+          STATUS=$(jq -er .status channel.json)
+          VERSION=$(jq -er .version channel.json)
+          METADATA=$(jq -er .metadata_asset channel.json)
+          IDENTITY=$(jq -er .release_workflow_identity channel.json)
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          {
+            echo "VERSION=$VERSION"
+            echo "RELEASE_METADATA=$METADATA"
+            echo "RELEASE_IDENTITY=$IDENTITY"
+          } >> "$GITHUB_ENV"
+      - name: Download and authenticate immutable release metadata
+        if: steps.channel.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$VERSION" \
+            --repo unicity-aos/aos-ce \
+            --pattern "$RELEASE_METADATA" \
+            --pattern "$RELEASE_METADATA.sigstore.json"
+          cosign verify-blob \
+            --bundle "$RELEASE_METADATA.sigstore.json" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity "$RELEASE_IDENTITY" \
+            --use-signed-timestamps \
+            "$RELEASE_METADATA"
+          gh release view "$VERSION" \
+            --repo unicity-aos/aos-ce \
+            --json isDraft,isPrerelease,tagName > release-state.json
+          TAG_OBJECT=$(gh api "repos/unicity-aos/aos-ce/git/ref/tags/$VERSION")
+          TAG_TYPE=$(jq -er .object.type <<< "$TAG_OBJECT")
+          TAG_COMMIT=$(jq -er .object.sha <<< "$TAG_OBJECT")
+          for _ in {1..8}; do
+            [[ "$TAG_TYPE" == tag ]] || break
+            TAG_OBJECT=$(gh api "repos/unicity-aos/aos-ce/git/tags/$TAG_COMMIT")
+            TAG_TYPE=$(jq -er .object.type <<< "$TAG_OBJECT")
+            TAG_COMMIT=$(jq -er .object.sha <<< "$TAG_OBJECT")
+          done
+          [[ "$TAG_TYPE" == commit ]] || {
+            echo "release tag does not peel to a commit" >&2
+            exit 1
           }
-          MAC_ARM=$(sha unicity-aos-aarch64-apple-darwin.tar.gz)
-          MAC_INTEL=$(sha unicity-aos-x86_64-apple-darwin.tar.gz)
-          LINUX_ARM=$(sha unicity-aos-aarch64-unknown-linux-gnu.tar.gz)
-          LINUX_INTEL=$(sha unicity-aos-x86_64-unknown-linux-gnu.tar.gz)
-          scripts/render-formula.sh "$VERSION" "$MAC_ARM" "$MAC_INTEL" "$LINUX_ARM" "$LINUX_INTEL"
+          python3 scripts/channel_release.py verify-release \
+            --channel channel.toml \
+            --release "$RELEASE_METADATA" \
+            --release-state release-state.json \
+            --tag-commit "$TAG_COMMIT" > release.json
+      - name: Render authenticated formula
+        if: steps.channel.outputs.found == 'true'
+        run: |
+          scripts/render-formula.sh \
+            "$(jq -er .version release.json)" \
+            "$(jq -er '.targets["aarch64-apple-darwin"].sha256' release.json)" \
+            "$(jq -er '.targets["x86_64-apple-darwin"].sha256' release.json)" \
+            "$(jq -er '.targets["aarch64-unknown-linux-gnu"].sha256' release.json)" \
+            "$(jq -er '.targets["x86_64-unknown-linux-gnu"].sha256' release.json)"
           scripts/validate-formula.sh Formula/aos.rb "$VERSION"
+      - name: Detect atomic state change
+        if: steps.channel.outputs.found == 'true'
+        id: state
+        run: |
+          if [[ "${{ steps.accepted.outputs.status }}" == unchanged ]] && \
+             [[ -z "$(git status --porcelain -- Formula/aos.rb)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Formula and accepted stable channel are already current."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Audit formula
-        if: steps.release.outputs.found == 'true'
+        if: steps.state.outputs.changed == 'true'
         run: |
           brew tap unicity-aos/tap
           cp Formula/aos.rb "$(brew --repository unicity-aos/tap)/Formula/aos.rb"
           brew trust --formula unicity-aos/tap/aos
           brew audit --strict unicity-aos/tap/aos
-      - name: Detect formula change
-        if: steps.release.outputs.found == 'true'
-        id: formula
-        run: |
-          if [[ -z "$(git status --porcelain -- Formula/aos.rb)" ]]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Formula is already current."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Publish signed formula commit
-        if: steps.formula.outputs.changed == 'true'
+      - name: Publish atomic signed state
+        if: steps.state.outputs.changed == 'true'
         id: publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -97,7 +166,9 @@ jobs:
             "$GITHUB_REPOSITORY" \
             "$GITHUB_SHA" \
             "$VERSION" \
-            Formula/aos.rb > "$RUNNER_TEMP/commit-formula.json"
+            Formula/aos.rb \
+            channel.toml \
+            channel.toml.sigstore.json > "$RUNNER_TEMP/commit-formula.json"
           gh api graphql --input "$RUNNER_TEMP/commit-formula.json" \
             > "$RUNNER_TEMP/commit-formula-response.json"
           oid=$(jq -er '
@@ -109,7 +180,7 @@ jobs:
           echo "sha=$oid" >> "$GITHUB_OUTPUT"
           echo "Published verified commit $oid: $url"
       - name: Validate published main
-        if: steps.formula.outputs.changed == 'true'
+        if: steps.publish.outputs.sha != ''
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_SHA: ${{ steps.publish.outputs.sha }}

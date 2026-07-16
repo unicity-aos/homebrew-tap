@@ -20,6 +20,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
       - name: Bind dispatched validation to its commit
         if: github.event_name == 'workflow_dispatch'
         env:
@@ -32,7 +35,9 @@ jobs:
       - run: shellcheck scripts/*.sh
       - run: scripts/test-render-formula.sh
       - run: scripts/test-create-signed-commit-payload.sh
-      - run: scripts/test-resolve-release-version.sh
+      - run: scripts/test-discover-stable-channel.sh
+      - run: scripts/test-workflow-contract.sh
+      - run: python3 scripts/test_channel_release.py
       - name: Audit published formula
         if: hashFiles('Formula/aos.rb') != ''
         run: |

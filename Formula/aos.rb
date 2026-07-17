@@ -33,12 +33,14 @@ class Aos < Formula
   end
 
   test do
+    ENV["HOME"] = testpath/"user"
     ENV["AOS_HOME"] = testpath/"home"
     assert_match "Unicity AOS 2026.1.1", shell_output("#{bin}/aos --version")
     assert_predicate libexec/"runtime/bin/astrid", :executable?
     assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?
     begin
-      system bin/"aos", "init", "--offline", "--yes"
+      system bin/"aos", "init", "--offline", "--yes", "--var",
+             "openai_api_key=homebrew-test-placeholder"
       assert_predicate testpath/"home/distributions/unicity-ce/Distro.toml", :file?
       assert_predicate testpath/"home/runtime/home/default/.config/distro.lock", :file?
     ensure

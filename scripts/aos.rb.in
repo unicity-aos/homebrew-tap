@@ -24,7 +24,8 @@ class Aos < Formula
   end
 
   def install
-    libexec.install "bin", "runtime", "capsules", "capsule-assets.txt", "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
+    libexec.install "bin", "runtime", "capsules", "capsule-assets.txt",
+                    "Distro.toml", "release-manifest.json", "runtime-compatibility.toml"
     (bin/"aos").write_env_script libexec/"bin/aos",
       "UNICITY_AOS_RUNTIME_BIN"    => libexec/"runtime/bin/astrid",
       "UNICITY_AOS_CAPSULE_DIR"    => libexec/"capsules",

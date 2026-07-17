@@ -29,7 +29,9 @@ grep -Fq 'libexec.install "bin", "runtime", "capsules", "capsule-assets.txt"' "$
 grep -Fq "unicity-aos-$version-aarch64-apple-darwin.tar.gz" "$formula"
 grep -Fq 'assert_predicate libexec/"runtime/bin/astrid", :executable?' "$formula"
 grep -Fq 'assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?' "$formula"
-grep -Fq 'system bin/"aos", "init", "--offline", "--yes"' "$formula"
+grep -Fq 'ENV["HOME"] = testpath/"user"' "$formula"
+grep -Fq 'system bin/"aos", "init", "--offline", "--yes", "--var"' "$formula"
+grep -Fq '"openai_api_key=homebrew-test-placeholder"' "$formula"
 grep -Fq 'runtime/home/default/.config/distro.lock' "$formula"
 if awk 'length($0) > 118 && $0 !~ /^[[:space:]]*url "https:\/\// { print NR ":" length($0) ":" $0; too_long = 1 } END { exit too_long }' "$formula"; then
   :

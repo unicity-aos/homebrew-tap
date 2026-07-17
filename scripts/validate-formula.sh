@@ -31,6 +31,12 @@ grep -Fq 'assert_predicate libexec/"runtime/bin/astrid", :executable?' "$formula
 grep -Fq 'assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?' "$formula"
 grep -Fq 'system bin/"aos", "init", "--offline", "--yes"' "$formula"
 grep -Fq 'runtime/home/default/.config/distro.lock' "$formula"
+if awk 'length($0) > 118 && $0 !~ /^[[:space:]]*url "https:\/\// { print NR ":" length($0) ":" $0; too_long = 1 } END { exit too_long }' "$formula"; then
+  :
+else
+  echo "formula contains a line longer than 118 characters" >&2
+  exit 1
+fi
 if grep -q '@[A-Z_]*@' "$formula"; then
   echo "formula still contains a template placeholder" >&2
   exit 1

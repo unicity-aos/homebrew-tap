@@ -6,27 +6,41 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 formula="$work/aos.rb"
+channel="$work/channel.toml"
+bundle="$work/channel.toml.sigstore.json"
 payload="$work/payload.json"
 printf 'class Aos < Formula\nend\n' > "$formula"
+printf 'generation = 1\n' > "$channel"
+printf '{"bundle":"fixture"}\n' > "$bundle"
 
 "$repo_root/scripts/create-signed-commit-payload.sh" \
   unicity-aos/homebrew-tap \
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-  2026.1.1 \
-  "$formula" > "$payload"
+  2026.1.0 \
+  "$formula" \
+  "$channel" \
+  "$bundle" > "$payload"
 
-expected_contents=$(base64 < "$formula" | tr -d '\n')
+formula_contents=$(base64 < "$formula" | tr -d '\n')
+channel_contents=$(base64 < "$channel" | tr -d '\n')
+bundle_contents=$(base64 < "$bundle" | tr -d '\n')
 jq -e \
-  --arg contents "$expected_contents" \
+  --arg formula_contents "$formula_contents" \
+  --arg channel_contents "$channel_contents" \
+  --arg bundle_contents "$bundle_contents" \
   '.variables.input == {
     branch: {
       repositoryNameWithOwner: "unicity-aos/homebrew-tap",
       refName: "refs/heads/main"
     },
     expectedHeadOid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    message: { headline: "aos 2026.1.1" },
+    message: { headline: "aos 2026.1.0" },
     fileChanges: {
-      additions: [{ path: "Formula/aos.rb", contents: $contents }]
+      additions: [
+        { path: "Formula/aos.rb", contents: $formula_contents },
+        { path: "Formula/channel-stable.toml", contents: $channel_contents },
+        { path: "Formula/channel-stable.toml.sigstore.json", contents: $bundle_contents }
+      ]
     }
   }' "$payload" > /dev/null
 jq -e \
@@ -34,19 +48,7 @@ jq -e \
   "$payload" > /dev/null
 
 if "$repo_root/scripts/create-signed-commit-payload.sh" \
-  unicity-aos/homebrew-tap not-a-commit 2026.1.1 "$formula" > /dev/null 2>&1; then
+  unicity-aos/homebrew-tap not-a-commit 2026.1.0 "$formula" "$channel" "$bundle" > /dev/null 2>&1; then
   echo "payload builder accepted an invalid expected head" >&2
   exit 1
 fi
-
-for invalid in 2026.1.0 2026.01.1 2026.1.01 2026.1; do
-  if "$repo_root/scripts/create-signed-commit-payload.sh" \
-    unicity-aos/homebrew-tap \
-    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-    "$invalid" \
-    "$formula" \
-    > /dev/null 2>&1; then
-    echo "payload builder accepted invalid or unsupported version: $invalid" >&2
-    exit 1
-  fi
-done

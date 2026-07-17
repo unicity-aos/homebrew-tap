@@ -42,6 +42,8 @@ jobs:
         if: hashFiles('Formula/aos.rb') != ''
         run: |
           brew tap unicity-aos/tap
-          cp Formula/aos.rb "$(brew --repository unicity-aos/tap)/Formula/aos.rb"
+          tap_root=$(brew --repository unicity-aos/tap)
+          mkdir -p "$tap_root/Formula"
+          cp Formula/aos.rb "$tap_root/Formula/aos.rb"
           brew trust --formula unicity-aos/tap/aos
           brew audit --strict unicity-aos/tap/aos

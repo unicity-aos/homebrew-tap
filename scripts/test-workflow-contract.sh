@@ -15,8 +15,16 @@ grep -Fq 'scripts/channel_release.py verify-release' "$workflow"
 grep -Fq "repos/unicity-aos/aos-ce/git/ref/tags/\$VERSION" "$workflow"
 grep -Fq "repos/unicity-aos/aos-ce/git/tags/\$TAG_COMMIT" "$workflow"
 grep -Fq "[[ \"\$TAG_TYPE\" == commit ]]" "$workflow"
+grep -Fq "tap_root=\$(brew --repository unicity-aos/tap)" "$workflow"
+grep -Fq "mkdir -p \"\$tap_root/Formula\"" "$workflow"
+grep -Fq "cp Formula/aos.rb \"\$tap_root/Formula/aos.rb\"" "$workflow"
 grep -Fq 'Formula/channel-stable.toml' "$repo_root/scripts/create-signed-commit-payload.sh"
 grep -Fq 'Formula/channel-stable.toml.sigstore.json' "$repo_root/scripts/create-signed-commit-payload.sh"
+
+ci_workflow="$repo_root/.github/workflows/ci.yml"
+grep -Fq "tap_root=\$(brew --repository unicity-aos/tap)" "$ci_workflow"
+grep -Fq "mkdir -p \"\$tap_root/Formula\"" "$ci_workflow"
+grep -Fq "cp Formula/aos.rb \"\$tap_root/Formula/aos.rb\"" "$ci_workflow"
 
 if grep -Fq 'inputs.version' "$workflow" || \
    grep -Fq 'REQUESTED_VERSION' "$workflow" || \

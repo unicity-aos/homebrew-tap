@@ -31,7 +31,7 @@ jq -e \
   '.variables.input == {
     branch: {
       repositoryNameWithOwner: "unicity-aos/homebrew-tap",
-      refName: "refs/heads/main"
+      branchName: "main"
     },
     expectedHeadOid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     message: { headline: "aos 2026.1.0" },

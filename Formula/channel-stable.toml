@@ -2,9 +2,9 @@ schema-version = 1
 kind = "aos-channel"
 product = "unicity-aos-ce"
 channel = "stable"
-generation = 2
-published-at = "2026-07-20T14:38:34Z"
-expires-at = "2026-08-19T14:38:34Z"
+generation = 3
+published-at = "2026-09-06T02:35:04Z"
+expires-at = "2026-10-06T02:35:04Z"
 
 [release]
 repository = "unicity-aos/aos-ce"

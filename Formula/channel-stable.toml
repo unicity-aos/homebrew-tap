@@ -2,43 +2,43 @@ schema-version = 1
 kind = "aos-channel"
 product = "unicity-aos-ce"
 channel = "stable"
-generation = 3
-published-at = "2026-09-06T02:35:04Z"
-expires-at = "2026-10-06T02:35:04Z"
+generation = 4
+published-at = "2026-09-09T20:24:18Z"
+expires-at = "2026-10-09T20:24:18Z"
 
 [release]
 repository = "unicity-aos/aos-ce"
-version = "2026.1.3"
-tag = "2026.1.3"
-source-commit = "efaa39f3f0ba80cf2c24985fd4383d8d73dd801a"
-metadata-asset = "unicity-aos-2026.1.3-release.toml"
-metadata-sha256 = "7356a872a09563a11c3feb3a770fe81c6500f27c06a9c9b097bbe7188a0d6658"
-release-workflow-identity = "https://github.com/unicity-aos/aos-ce/.github/workflows/release.yml@refs/tags/2026.1.3"
+version = "2026.9.0"
+tag = "2026.9.0"
+source-commit = "8527d13c9c54e947b85c80fb0b5c385f8fdf30b3"
+metadata-asset = "unicity-aos-2026.9.0-release.toml"
+metadata-sha256 = "560ea3a70a4b76df759daccc9faa766aa5766d41d876b2231414563c7a19febd"
+release-workflow-identity = "https://github.com/unicity-aos/aos-ce/.github/workflows/release.yml@refs/tags/2026.9.0"
 
 [targets.aarch64-apple-darwin]
-asset = "unicity-aos-2026.1.3-aarch64-apple-darwin.tar.gz"
-sha256 = "a225cd2453c40adcf12e03edd026e9b2165dab845c5cb972e26874780e7c8665"
-blake3 = "1b28fbf0389be75f709d18aed07a27f484bd8d29d9cabcb22896925fcd9c7211"
-sigstore-bundle = "unicity-aos-2026.1.3-aarch64-apple-darwin.tar.gz.sigstore.json"
-size = 43472139
+asset = "unicity-aos-2026.9.0-aarch64-apple-darwin.tar.gz"
+sha256 = "46378c58687d58a23ce3ee5de64c855c624ee576a0a1296c750e5e5dfeba5f18"
+blake3 = "d91fb30ca4b339f6fabb16e503ed66d0c987590db0381b6e7f31695e21c98eee"
+sigstore-bundle = "unicity-aos-2026.9.0-aarch64-apple-darwin.tar.gz.sigstore.json"
+size = 56320580
 
 [targets.x86_64-apple-darwin]
-asset = "unicity-aos-2026.1.3-x86_64-apple-darwin.tar.gz"
-sha256 = "f9baf841a4edcf68578a725ca0e39852915cf4c4b68d3e04f7439a661c0a2b46"
-blake3 = "5cef80ca9bfc642b1f6c30559e4b32ce252f629e23343402552e002c66d706b4"
-sigstore-bundle = "unicity-aos-2026.1.3-x86_64-apple-darwin.tar.gz.sigstore.json"
-size = 46875213
+asset = "unicity-aos-2026.9.0-x86_64-apple-darwin.tar.gz"
+sha256 = "089fd52ff20f42b7da2343d8f37812a05cdfb2158860461f8406f80e27d86ae1"
+blake3 = "87bda64e1cfdff3d337d592cd96b01a0da3fe60ef892e4eaea81a8a0bd3227ca"
+sigstore-bundle = "unicity-aos-2026.9.0-x86_64-apple-darwin.tar.gz.sigstore.json"
+size = 61102955
 
 [targets.aarch64-unknown-linux-gnu]
-asset = "unicity-aos-2026.1.3-aarch64-unknown-linux-gnu.tar.gz"
-sha256 = "bff561375179d3289b3d3e2ef90f804c9841b32003870683acc0b100078db6ad"
-blake3 = "4c0d859352eaf36f8afdc7467091e307c4bc26e5ecff38cee94a06beb196b79f"
-sigstore-bundle = "unicity-aos-2026.1.3-aarch64-unknown-linux-gnu.tar.gz.sigstore.json"
-size = 49125980
+asset = "unicity-aos-2026.9.0-aarch64-unknown-linux-gnu.tar.gz"
+sha256 = "029f8beae6b7d9820e733bd59120da1578c40ac9be3b2158ed3497c8b9da2ae3"
+blake3 = "b74b0aa39d924d7385bc138141346782d5756a6cec730bb4665a4c1f1595f3c3"
+sigstore-bundle = "unicity-aos-2026.9.0-aarch64-unknown-linux-gnu.tar.gz.sigstore.json"
+size = 60132069
 
 [targets.x86_64-unknown-linux-gnu]
-asset = "unicity-aos-2026.1.3-x86_64-unknown-linux-gnu.tar.gz"
-sha256 = "cf2079df871016ce608ca1b8f290912dc002e550ae8d4c6795d3d33324e29c8e"
-blake3 = "97157ccf86128bb34f9392e6f455f5edb6f4573d8f5db5cf1a277f9e67d44994"
-sigstore-bundle = "unicity-aos-2026.1.3-x86_64-unknown-linux-gnu.tar.gz.sigstore.json"
-size = 51079929
+asset = "unicity-aos-2026.9.0-x86_64-unknown-linux-gnu.tar.gz"
+sha256 = "f2fab771d69a11000d661c63a13597f3371ac115514753d1466f5ef97dee2b54"
+blake3 = "5d9cb36ca89bfa33bf674d1abdc1f20196dfd3af9f57219912debbdff04a13b8"
+sigstore-bundle = "unicity-aos-2026.9.0-x86_64-unknown-linux-gnu.tar.gz.sigstore.json"
+size = 63459450

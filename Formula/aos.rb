@@ -5,21 +5,21 @@ class Aos < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.0/unicity-aos-2026.10.0-aarch64-apple-darwin.tar.gz"
-      sha256 "91f2883fd31f24369a788fa9d5b18b0545f89ae33a21659af842daefc32d0dfa"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.1/unicity-aos-2026.10.1-aarch64-apple-darwin.tar.gz"
+      sha256 "4fdced38acd51526c41ec7c8dac86ee0caad6521477caadcf80d22f63a43cad7"
     else
-      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.0/unicity-aos-2026.10.0-x86_64-apple-darwin.tar.gz"
-      sha256 "fa0197b95ce8940f302b936f1e4de6e0c69cb930a744913214ac10ff00a491a7"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.1/unicity-aos-2026.10.1-x86_64-apple-darwin.tar.gz"
+      sha256 "3a15a0c7040445a720b810dc626e550b5f11c4b7603d067f918a7f53c521aa8c"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.0/unicity-aos-2026.10.0-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "cd5b5cd520ec42ab96f8f9f7948d6ca1fb2c4e94a60b443f390dbd0ec86c7be5"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.1/unicity-aos-2026.10.1-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "4040d37b2c96d09d88fa0fadfd97d7af5430147349d51f1014c9aab4aa594e8b"
     else
-      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.0/unicity-aos-2026.10.0-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "19b459fcbc2c68be43d085c2ce8a365c29423cb5585bffde3e4add0348c43349"
+      url "https://github.com/unicity-aos/aos-ce/releases/download/2026.10.1/unicity-aos-2026.10.1-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "63d8fba4d9ca8d9eb8a83f68f653ebe3100aeb070cbc8f73e3a85646219c90fc"
     end
   end
 
@@ -35,7 +35,7 @@ class Aos < Formula
   test do
     ENV["HOME"] = testpath/"user"
     ENV["AOS_HOME"] = testpath/"home"
-    assert_match "Unicity AOS 2026.10.0", shell_output("#{bin}/aos --version")
+    assert_match "Unicity AOS 2026.10.1", shell_output("#{bin}/aos --version")
     assert_predicate libexec/"runtime/bin/astrid", :executable?
     assert_predicate libexec/"runtime/bin/astrid-daemon", :executable?
     begin
